@@ -9,6 +9,7 @@
 
 import { Router, Request, Response, NextFunction } from "express";
 import { metricsService, MetricsService } from "../../services/metrics";
+import { promRegistry } from "../../utils/metrics";
 import { emptyBodySchema } from "../../schemas/common";
 import { validate } from "../middleware/validate";
 
@@ -38,9 +39,12 @@ export function createMetricsRouter(options: MetricsRouterOptions = {}): Router 
    */
   router.get("/", async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const output = await service.exportPrometheusMetrics();
+      const [legacyOutput, promOutput] = await Promise.all([
+        service.exportPrometheusMetrics(),
+        promRegistry.metrics(),
+      ]);
       res.setHeader("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
-      res.status(200).send(output);
+      res.status(200).send(legacyOutput + "\n" + promOutput);
     } catch (err) {
       next(err);
     }
