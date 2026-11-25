@@ -641,9 +641,16 @@ export function createAgentsRouter(options: AgentsRouterOptions = {}): Router {
       // Await invalidation so the updated lastSeenAt is visible on the next GET
       await invalidateAgentsCache().catch(() => {/* best-effort */});
 
+      const lastSeenAt = updated?.lastSeenAt ?? new Date().toISOString();
+      const nextExpectedAt = new Date(
+        new Date(lastSeenAt).getTime() + 15 * 60 * 1000,
+      ).toISOString();
+
       res.status(200).json({
         status: "ok",
-        lastSeenAt: updated?.lastSeenAt ?? new Date().toISOString(),
+        agentId: req.params.id,
+        lastSeenAt,
+        nextExpectedAt,
       });
     } catch (error) {
       next(error);
