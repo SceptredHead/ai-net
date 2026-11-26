@@ -305,6 +305,71 @@ pub struct CallerActivity {
     pub last_seen: u64,
 }
 
+// ─── Versioned Capability Pinning (issue #XXX) ───────────────────────────────
+
+/// A versioned capability entry stored on-chain for an agent.
+///
+/// Stored in `Persistent` storage keyed by
+/// `DataKey::VersionedCapability(agent_id, capability, version)`.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VersionedCapability {
+    /// Agent this capability belongs to.
+    pub agent_id: Symbol,
+    /// Capability name (e.g. `research`, `coding`).
+    pub capability: Symbol,
+    /// Semantic version string (e.g. `"2.1.0"`).  Always three dot-separated
+    /// unsigned integers; enforced by `validate_semver`.
+    pub version: String,
+    /// Ledger timestamp when this version was registered.
+    pub registered_at: u64,
+    /// If `Some`, this version has been deprecated.  The value is the ledger
+    /// timestamp at which it was deprecated and must not be served by default
+    /// queries.
+    pub deprecated_at: Option<u64>,
+}
+
+/// An (agent_id, version) pair used as an index entry for versioned capabilities.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CapabilityIndexEntry {
+    /// Agent identifier.
+    pub agent_id: Symbol,
+    /// Registered version string.
+    pub version: String,
+}
+
+/// A version range used when querying agents by capability version.
+///
+/// Mirrors the semantics of common package managers:
+/// - `Exact("2.1.0")` — only `2.1.0`.
+/// - `Compatible("2.0.0")` — caret (`^`): any `2.x.y` where the tuple is `>= 2.0.0`.
+/// - `PatchOnly("2.1.0")` — tilde (`~`): any `2.1.y` where `y >= 0` from `2.1.0`.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum VersionRange {
+    /// Match only agents registered with this exact version string.
+    Exact(String),
+    /// Caret range: same major version, any `minor.patch >= lower bound`.
+    Compatible(String),
+    /// Tilde range: same major.minor, any patch >= lower bound.
+    PatchOnly(String),
+}
+
+/// A lightweight agent summary returned by versioned capability queries.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VersionedAgentResult {
+    /// Agent identifier.
+    pub agent_id: Symbol,
+    /// The registered version that satisfied the query.
+    pub version: String,
+    /// Ledger timestamp of registration.
+    pub registered_at: u64,
+    /// Deprecation timestamp, if the version has been deprecated.
+    pub deprecated_at: Option<u64>,
+}
+
 // ─── On-chain Reputation (issue #191) ────────────────────────────────────────
 
 /// On-chain reputation record for an agent.

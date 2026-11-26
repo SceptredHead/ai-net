@@ -57,6 +57,8 @@ pub enum Error {
     RateLimitExceeded = 28,
     /// Configuration value is out of accepted bounds.
     InvalidConfig = 29,
+    /// The supplied version string is not a valid semver (major.minor.patch).
+    InvalidVersion = 30,
 }
 
 impl Error {
@@ -94,6 +96,7 @@ impl Error {
             29 => Some(Error::BridgeProofMismatch),
             30 => Some(Error::InvalidBridgeExpiry),
             31 => Some(Error::InvalidAuditRange),
+            30 => Some(Error::InvalidVersion),
             _ => None,
         }
     }
